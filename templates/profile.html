@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block head %}
+<script src="https://unpkg.com/lucide@latest"></script>
+{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar">{{ user['name'][0].upper() }}</div>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-identity">
+                <h1 class="profile-name">{{ user['name'] }}</h1>
+                <p class="profile-email">{{ user['email'] }}</p>
+            </div>
+
+            <hr class="profile-divider">
+
+            <div class="profile-meta">
+                <span class="profile-meta-label">
+                    <i data-lucide="calendar"></i>
+                    Member since
+                </span>
+                <span class="profile-meta-value">{{ member_since }}</span>
+            </div>
+
+            <div class="profile-actions">
+                <a href="{{ url_for('logout') }}" class="btn-primary">Sign out</a>
+            </div>
+        </div>
+
+        {% if by_category %}
+        <div class="profile-card profile-tx-card">
+            <h2 class="profile-tx-title">
+                <i data-lucide="tag"></i>
+                Spending by Category
+            </h2>
+            <div class="profile-cat-list">
+                {% for row in by_category %}
+                {% set pct = (row['total'] / total_spent * 100) | round(1) %}
+                <div class="profile-cat-row">
+                    <div class="profile-cat-header">
+                        <span class="profile-tx-badge">{{ row['category'] }}</span>
+                        <span class="profile-cat-count">{{ row['count'] }} transaction{{ 's' if row['count'] != 1 }}</span>
+                        <span class="profile-cat-amt">₹{{ "%.2f"|format(row['total']) }}</span>
+                    </div>
+                    <div class="profile-cat-track">
+                        <div class="profile-cat-bar" style="width: {{ pct }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="profile-card profile-tx-card">
+            <h2 class="profile-tx-title">
+                <i data-lucide="clock"></i>
+                Recent Transactions
+            </h2>
+
+            {% if recent %}
+            <table class="profile-tx-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th class="profile-tx-amount">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in recent %}
+                    <tr>
+                        <td class="profile-tx-date">{{ tx['date'] }}</td>
+                        <td>{{ tx['description'] or '—' }}</td>
+                        <td><span class="profile-tx-badge">{{ tx['category'] }}</span></td>
+                        <td class="profile-tx-amount">₹{{ "%.2f"|format(tx['amount']) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="profile-tx-empty">No transactions yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(/d/Agentic Coding/Learning/CampusX Claude Code Course/expense-tracker/venv/Scripts/python.exe *)"
+      "Bash(/d/Agentic Coding/Learning/CampusX Claude Code Course/expense-tracker/venv/Scripts/python.exe *)",
+      "Bash(python app.py)"
     ]
   }
 }
