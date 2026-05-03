@@ -1,8 +1,8 @@
 import sqlite3
-from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
-from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id, get_recent_expenses, get_expenses_by_category
+from database.db import init_db, seed_db, create_user, get_user_by_email
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"  # TODO: load from env var in production
@@ -99,13 +99,14 @@ def dashboard():
 def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
-    user = get_user_by_id(session["user_id"])
-    member_since = datetime.strptime(user["created_at"], "%Y-%m-%d %H:%M:%S").strftime("%B %d, %Y")
-    recent = get_recent_expenses(session["user_id"])
-    by_category = get_expenses_by_category(session["user_id"])
-    total_spent = sum(row["total"] for row in by_category)
-    return render_template("profile.html", user=user, member_since=member_since,
-                           recent=recent, by_category=by_category, total_spent=total_spent)
+    uid = session["user_id"]
+    user      = get_user_by_id(uid)
+    stats     = get_summary_stats(uid)
+    recent    = get_recent_transactions(uid)
+    breakdown = get_category_breakdown(uid)
+    return render_template("profile.html",
+                           user=user, stats=stats,
+                           recent=recent, breakdown=breakdown)
 
 
 @app.route("/expenses/add")
