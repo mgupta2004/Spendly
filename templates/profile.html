@@ -27,7 +27,7 @@
                     <i data-lucide="calendar"></i>
                     Member since
                 </span>
-                <span class="profile-meta-value">{{ member_since }}</span>
+                <span class="profile-meta-value">{{ user['member_since'] }}</span>
             </div>
 
             <div class="profile-actions">
@@ -35,20 +35,36 @@
             </div>
         </div>
 
-        {% if by_category %}
+        <div class="profile-card profile-stats-card">
+            <div class="profile-stats-grid">
+                <div class="profile-stat">
+                    <span class="profile-stat-value">&#8377;{{ "%.2f"|format(stats['total_spent']) }}</span>
+                    <span class="profile-stat-label">Total Spent</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="profile-stat-value">{{ stats['transaction_count'] }}</span>
+                    <span class="profile-stat-label">Transactions</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="profile-stat-value">{{ stats['top_category'] or '&#8212;' }}</span>
+                    <span class="profile-stat-label">Top Category</span>
+                </div>
+            </div>
+        </div>
+
+        {% if breakdown %}
         <div class="profile-card profile-tx-card">
             <h2 class="profile-tx-title">
                 <i data-lucide="tag"></i>
                 Spending by Category
             </h2>
             <div class="profile-cat-list">
-                {% for row in by_category %}
-                {% set pct = (row['total'] / total_spent * 100) | round(1) %}
+                {% for row in breakdown %}
+                {% set pct = row['pct'] %}
                 <div class="profile-cat-row">
                     <div class="profile-cat-header">
-                        <span class="profile-tx-badge">{{ row['category'] }}</span>
-                        <span class="profile-cat-count">{{ row['count'] }} transaction{{ 's' if row['count'] != 1 }}</span>
-                        <span class="profile-cat-amt">₹{{ "%.2f"|format(row['total']) }}</span>
+                        <span class="profile-tx-badge">{{ row['name'] }}</span>
+                        <span class="profile-cat-amt">₹{{ "%.2f"|format(row['amount']) }}</span>
                     </div>
                     <div class="profile-cat-track">
                         <div class="profile-cat-bar" style="width: {{ pct }}%"></div>
