@@ -1,4 +1,7 @@
 import sqlite3
+import calendar
+from datetime import date, datetime, timedelta
+from typing import Optional, Tuple
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import check_password_hash
 from database.db import init_db, seed_db, create_user, get_user_by_email
@@ -95,18 +98,71 @@ def dashboard():
     return "Dashboard — coming in Step 4"
 
 
+def _parse_date(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+        return value
+    except ValueError:
+        return None
+
+
+def _resolve_period(period: str) -> Tuple[Optional[str], Optional[str]]:
+    today = date.today()
+    if period == "this_month":
+        from_d = today.replace(day=1).isoformat()
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        to_d = today.replace(day=last_day).isoformat()
+        return from_d, to_d
+    if period == "last_month":
+        last_month_end = today.replace(day=1) - timedelta(days=1)
+        from_d = last_month_end.replace(day=1).isoformat()
+        to_d = last_month_end.isoformat()
+        return from_d, to_d
+    if period == "last_3_months":
+        # Subtract 3 months manually; adjust year if we cross a January boundary
+        month = today.month - 3
+        year = today.year
+        if month <= 0:
+            month += 12
+            year -= 1
+        from_d = date(year, month, 1).isoformat()
+        to_d = today.isoformat()
+        return from_d, to_d
+    return None, None
+
+
 @app.route("/profile")
 def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
     uid = session["user_id"]
+
+    from_date = _parse_date(request.args.get("from_date"))
+    to_date   = _parse_date(request.args.get("to_date"))
+    period    = request.args.get("period", "")
+    active_period = None
+
+    if from_date is None and to_date is None and period:
+        from_date, to_date = _resolve_period(period)
+        if from_date:
+            active_period = period
+
+    limit = None if (from_date or to_date) else 10
+    custom_date_filter = bool((from_date or to_date) and not active_period)
+
     user      = get_user_by_id(uid)
-    stats     = get_summary_stats(uid)
-    recent    = get_recent_transactions(uid)
-    breakdown = get_category_breakdown(uid)
+    stats     = get_summary_stats(uid, from_date=from_date, to_date=to_date)
+    recent    = get_recent_transactions(uid, limit=limit,
+                                        from_date=from_date, to_date=to_date)
+    breakdown = get_category_breakdown(uid, from_date=from_date, to_date=to_date)
     return render_template("profile.html",
                            user=user, stats=stats,
-                           recent=recent, breakdown=breakdown)
+                           recent=recent, breakdown=breakdown,
+                           from_date=from_date, to_date=to_date,
+                           active_period=active_period,
+                           custom_date_filter=custom_date_filter)
 
 
 @app.route("/expenses/add")
@@ -125,4 +181,5 @@ def delete_expense(id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    import os
+    app.run(debug=os.environ.get("FLASK_DEBUG", "0") == "1", port=5001)
