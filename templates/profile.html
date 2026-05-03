@@ -35,6 +35,42 @@
             </div>
         </div>
 
+        <div class="filter-bar">
+            <div class="filter-presets">
+                <a href="{{ url_for('profile') }}"
+                   class="filter-pill{% if not active_period and not from_date and not to_date %} filter-pill--active{% endif %}">
+                    All Time
+                </a>
+                <a href="{{ url_for('profile', period='this_month') }}"
+                   class="filter-pill{% if active_period == 'this_month' %} filter-pill--active{% endif %}">
+                    This Month
+                </a>
+                <a href="{{ url_for('profile', period='last_month') }}"
+                   class="filter-pill{% if active_period == 'last_month' %} filter-pill--active{% endif %}">
+                    Last Month
+                </a>
+                <a href="{{ url_for('profile', period='last_3_months') }}"
+                   class="filter-pill{% if active_period == 'last_3_months' %} filter-pill--active{% endif %}">
+                    Last 3 Months
+                </a>
+            </div>
+            <form method="GET" action="{{ url_for('profile') }}" class="filter-date-form">
+                <input type="date" name="from_date" value="{{ from_date or '' }}" class="filter-date-input">
+                <span class="filter-date-sep">to</span>
+                <input type="date" name="to_date" value="{{ to_date or '' }}" class="filter-date-input">
+                <button type="submit" class="filter-submit">Filter</button>
+            </form>
+            {% if custom_date_filter %}
+            <p class="filter-active-label">
+                <i data-lucide="calendar-range"></i>
+                Showing results for
+                <strong>{{ from_date or '…' }}</strong>
+                &rarr;
+                <strong>{{ to_date or '…' }}</strong>
+            </p>
+            {% endif %}
+        </div>
+
         <div class="profile-card profile-stats-card">
             <div class="profile-stats-grid">
                 <div class="profile-stat">
@@ -78,7 +114,7 @@
         <div class="profile-card profile-tx-card">
             <h2 class="profile-tx-title">
                 <i data-lucide="clock"></i>
-                Recent Transactions
+                {% if from_date or to_date %}Transactions{% else %}Recent Transactions{% endif %}
             </h2>
 
             {% if recent %}
